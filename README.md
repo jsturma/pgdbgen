@@ -1,2 +1,2 @@
 # pgdbgen
-PG DB Generator / Loader &amp; update
+PG Test DB Generator / Loader &amp; Update using Faker
