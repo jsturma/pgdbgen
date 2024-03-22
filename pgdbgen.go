@@ -4,13 +4,17 @@ import (
 	"crypto/md5"
 	"database/sql"
 	"encoding/hex"
+	"flag"
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	"gopkg.in/yaml.v2"
+
 	// "github.com/jaswdr/faker"
 	// "github.com/bxcodec/faker/v4"
 	"github.com/go-faker/faker/v4"
@@ -33,27 +37,88 @@ type fakeDataStruct struct {
 	UnitPrice     float64 `faker:"boundary_start=0.09, boundary_end=99.99"`
 }
 
-const (
-	host         = "localhost"
-	port         = 30708
-	user         = "admin"
-	password     = "Password123!"
-	dbname       = "mytestdb"
-	runOnlyFaker = false
-)
+type Config struct {
+	Host                   string `yaml:"host"`
+	Port                   int    `yaml:"port"`
+	User                   string `yaml:"user"`
+	Password               string `yaml:"password"`
+	Dbname                 string `yaml:"dbname"`
+	RunOnlyFaker           bool   `yaml:"runOnlyFaker"`
+	NumWorkers             int    `yaml:"numWorkers"`
+	DbRecords2Process      int    `yaml:"dbRecords2Process"`
+	PcentOutput            int    `yaml:"pcentOutput"`
+	OutPutRecordsProcessed int    `yaml:"outPutRecordsProcessed"`
+	MinDays                int    `yaml:"minDays"`
+	MaxDays                int    `yaml:"maxDays"`
+	DelayLastLogin         int    `yaml:"delayLastLogin"`
+}
 
-const (
-	numWorkers             = 3                               // Number of worker goroutines
-	dbRecords2Process      = 100                             // Number of db records to be added
-	pcentOutput            = 10                              // Output every x%
-	outPutRecordsProcessed = dbRecords2Process / pcentOutput // Output nb of Records processed interval
-	// Define the minimum and maximum values
-	minDays        = 259200
-	maxDays        = 31536000
-	delayLastLogin = 500
+var (
+	host                   string
+	port                   int
+	user                   string
+	password               string
+	dbname                 string
+	runOnlyFaker           bool
+	numWorkers             int
+	dbRecords2Process      int
+	pcentOutput            int
+	outPutRecordsProcessed int
+	minDays                int
+	maxDays                int
+	delayLastLogin         int
 )
 
 func main() {
+	var paramFromYaml string
+	// Define command-line flags
+	flag.StringVar(&host, "host", "localhost", "Host address")
+	flag.IntVar(&port, "port", 5432, "Port number")
+	flag.StringVar(&user, "user", "postgres", "Database Admin User")
+	flag.StringVar(&password, "password", "postgres", "Database Admin  password")
+	flag.StringVar(&dbname, "dbname", "mytestdb", "Database name to generate")
+	flag.BoolVar(&runOnlyFaker, "runOnlyFaker", false, "Run only Faker mode")
+	flag.IntVar(&numWorkers, "numWorkers", 3, "Max nb worker")
+	flag.IntVar(&dbRecords2Process, "dbRecords2Process", 100, "Number of db records to be added")
+	flag.IntVar(&pcentOutput, "pcentOutput", 10, "Output every x%")
+	flag.IntVar(&minDays, "minDays", 259200, "Minimum number of days (3 days)")
+	flag.IntVar(&maxDays, "maxDays", 31536000, "Maximum number of days (1 year)")
+	flag.IntVar(&delayLastLogin, "delayLastLogin", 500, "Delay for last login")
+	flag.StringVar(&paramFromYaml, "config", "", "YAML configuration file")
+
+	// Calculate outPutRecordsProcessed
+	outPutRecordsProcessed = dbRecords2Process / (100 / pcentOutput)
+
+	// Parse command-line flags
+	flag.Parse()
+
+	var config Config
+	if paramFromYaml != "" {
+		yamlFile, err := os.ReadFile(paramFromYaml)
+		if err != nil {
+			log.Fatalf("Error reading YAML file: %v", err)
+		}
+
+		err = yaml.Unmarshal(yamlFile, &config)
+		if err != nil {
+			log.Fatalf("Error unmarshalling YAML: %v", err)
+		}
+	}
+
+	if paramFromYaml != "" {
+		host = config.Host
+		port = config.Port
+		user = config.User
+		password = config.Password
+		dbname = config.Dbname
+		runOnlyFaker = config.RunOnlyFaker
+		numWorkers = config.NumWorkers
+		dbRecords2Process = config.DbRecords2Process
+		pcentOutput = config.PcentOutput
+		minDays = config.MinDays
+		maxDays = config.MaxDays
+		delayLastLogin = config.DelayLastLogin
+	}
 	err := createDatabaseIfNotExists(host, port, user, password, dbname)
 	if err != nil {
 		log.Fatal(err)
@@ -175,6 +240,10 @@ func createTables(db *sql.DB) {
 func populateData(db *sql.DB, numRecords int) {
 	// Seed the random number generator
 	rand.Seed(time.Now().UnixNano())
+	// source := rand.NewSource(time.Now().UnixNano())
+	// rng := rand.New(source)
+
+	// rand.New(rand.NewSource(rand.New(rand.NewSource(seed)))
 
 	// Create a wait group to wait for all goroutines to finish
 	var wg sync.WaitGroup
@@ -244,7 +313,7 @@ func worker(db *sql.DB, records <-chan int, wg *sync.WaitGroup, done chan<- bool
 	for recordID := range records {
 		log.Println("Worker : ", wrk_id, " RecordID", recordID) // Generate fake data
 		a := fakeDataStruct{}
-		if runOnlyFaker == true {
+		if runOnlyFaker {
 			log.Println("Calling faker.FakeData Func") // Generate fake data
 		}
 		err = faker.FakeData(&a)
@@ -285,7 +354,7 @@ func worker(db *sql.DB, records <-chan int, wg *sync.WaitGroup, done chan<- bool
 		productID := p_uuid
 
 		//
-		if runOnlyFaker == true {
+		if runOnlyFaker {
 
 			log.Println("paymentSerial			:", paymentSerial)
 			log.Println("payementQuantity		:", payementQuantity)
