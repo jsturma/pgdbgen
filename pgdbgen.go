@@ -191,7 +191,9 @@ func createDatabaseIfNotExists(host string, port int, user string, password stri
 		log.Printf("Database '%s' created successfully.\n", dbname)
 
 	} else {
-		fmt.Printf("Database '%s' already exists.\n", dbname)
+		if runOnlyFaker {
+			log.Printf("Database '%s' already exists.\n", dbname)
+		}
 	}
 	return nil
 }
