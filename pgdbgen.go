@@ -294,9 +294,13 @@ func populateData(db *sql.DB, numRecords int) {
 
 	// Wait for all worker goroutines to finish
 	go func() {
-		log.Println("Wait for all worker goroutines to finish")
+		if runOnlyFaker {
+			log.Println("Wait for all worker goroutines to finish")
+		}
 		wg.Wait()
-		log.Println("All worker goroutines has finished")
+		if runOnlyFaker {
+			log.Println("All worker goroutines has finished")
+		}
 		close(done)
 
 	}()
