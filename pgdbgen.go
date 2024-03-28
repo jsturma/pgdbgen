@@ -333,7 +333,9 @@ func worker(db *sql.DB, records <-chan int, wg *sync.WaitGroup, done chan<- bool
 
 	// Generate and insert records
 	for recordID := range records {
-		log.Println("Worker : ", wrk_id, " RecordID", recordID) // Generate fake data
+		if runOnlyFaker {
+			log.Println("Worker : ", wrk_id, " RecordID", recordID) // Generate fake data
+		}
 		a := fakeDataStruct{}
 		if runOnlyFaker {
 			log.Println("Calling faker.FakeData Func") // Generate fake data
