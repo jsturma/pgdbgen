@@ -420,8 +420,9 @@ func worker(db *sql.DB, records <-chan int, wg *sync.WaitGroup, done chan<- bool
 			log.Println("Error inserting account record:", err)
 		}
 		// Print progress
-		if runOnlyFaker {
-			if recordID%outPutRecordsProcessed == 0 {
+
+		if recordID%outPutRecordsProcessed == 0 {
+			if runOnlyFaker {
 				log.Printf("Inserted record %d of %d\n", recordID, records)
 			}
 		}
