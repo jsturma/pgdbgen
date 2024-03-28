@@ -354,7 +354,7 @@ func worker(db *sql.DB, records <-chan int, wg *sync.WaitGroup, done chan<- bool
 		payementTotalAmount := a.UnitPrice * float64(payementQuantity)
 		// Combine payment variables into a single string
 		combinedString := fmt.Sprintf("%s%d%.2f", payementEpochString, payementQuantity, payementTotalAmount)
-		// then Calculate MD5 hash & covertit to string
+		// then Calculate MD5 hash & covert it to string
 		hash := md5.Sum([]byte(combinedString))
 		// Convert MD5 hash to string
 		paymentSerial := hex.EncodeToString(hash[:])
