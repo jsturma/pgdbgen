@@ -106,18 +106,40 @@ func main() {
 	}
 
 	if paramFromYaml != "" {
-		host = config.Host
-		port = config.Port
-		user = config.User
-		password = config.Password
-		dbname = config.Dbname
+		if len(config.Host) != 0 {
+			host = config.Host
+		}
+		if config.Port != 0 {
+			port = config.Port
+		}
+		if len(config.User) != 0 {
+			user = config.User
+		}
+		if len(config.Password) != 0 {
+			password = config.Password
+		}
+		if len(config.Dbname) != 0 {
+			dbname = config.Dbname
+		}
 		runOnlyFaker = config.RunOnlyFaker
-		numWorkers = config.NumWorkers
-		dbRecords2Process = config.DbRecords2Process
-		pcentOutput = config.PcentOutput
-		minDays = config.MinDays
-		maxDays = config.MaxDays
-		delayLastLogin = config.DelayLastLogin
+		if config.NumWorkers != 0 {
+			numWorkers = config.NumWorkers
+		}
+		if config.DbRecords2Process != 0 {
+			dbRecords2Process = config.DbRecords2Process
+		}
+		if config.PcentOutput != 0 {
+			pcentOutput = config.PcentOutput
+		}
+		if config.MinDays != 0 {
+			minDays = config.MinDays
+		}
+		if config.MaxDays != 0 {
+			maxDays = config.MaxDays
+		}
+		if config.DelayLastLogin != 0 {
+			delayLastLogin = config.DelayLastLogin
+		}
 	}
 	err := createDatabaseIfNotExists(host, port, user, password, dbname)
 	if err != nil {
@@ -396,7 +418,7 @@ func worker(db *sql.DB, records <-chan int, wg *sync.WaitGroup, done chan<- bool
 			log.Println("Error inserting account record:", err)
 		}
 		// Print progress
-		if recordID%10 == 0 {
+		if recordID%outPutRecordsProcessed == 0 {
 			log.Printf("Inserted record %d of %d\n", recordID, records)
 		}
 	}
