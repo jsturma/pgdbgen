@@ -305,7 +305,9 @@ func populateData(db *sql.DB, numRecords int) {
 
 func worker(db *sql.DB, records <-chan int, wg *sync.WaitGroup, done chan<- bool, wrk_id int) {
 	defer wg.Done()
-	log.Printf("Starting Worker ID:%d\n", wrk_id)
+	if runOnlyFaker {
+		log.Printf("Starting Worker ID:%d\n", wrk_id)
+	}
 	// Prepare the INSERT INTO statements
 	insertPayment, err := db.Prepare("INSERT INTO payments (p_md5, p_amount, p_epoch) VALUES ($1, $2, $3)")
 	if err != nil {
@@ -427,6 +429,8 @@ func worker(db *sql.DB, records <-chan int, wg *sync.WaitGroup, done chan<- bool
 			}
 		}
 	}
-	log.Printf("Worker ID: %d stopping\n", wrk_id)
+	if runOnlyFaker {
+		log.Printf("Worker ID: %d stopping\n", wrk_id)
+	}
 	// done <- true
 }
