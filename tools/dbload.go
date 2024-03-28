@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -16,6 +17,23 @@ func logMessage(message string) {
 	fmt.Println(currentTime, message)
 }
 
+func findYAMLFiles(root string) []string {
+	var yamlFiles []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && (filepath.Ext(path) == ".yaml" || filepath.Ext(path) == ".yml") {
+			yamlFiles = append(yamlFiles, path)
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	return yamlFiles
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		logMessage("Usage: " + os.Args[0] + " <dbname>")
@@ -24,22 +42,17 @@ func main() {
 	dbname := os.Args[1]
 
 	for {
-		yamlFiles, err := exec.Command("find", ".", "-maxdepth", "1", "-type", "f", "\\(", "-name", "*.yaml", "-o", "-name", "*.yml", "\\)").Output()
-		if err != nil {
-			log.Fatal(err)
-		}
-		yamlFilesStr := strings.TrimSpace(string(yamlFiles))
-
-		if yamlFilesStr != "" {
-			files := strings.Fields(yamlFilesStr)
-			for _, file := range files {
+		yamlFiles := findYAMLFiles(".")
+		if len(yamlFiles) != 0 {
+			// files := strings.Fields(yamlFiles)
+			for _, yamlFile := range yamlFiles {
 				logMessage("Starting to add rows to " + dbname)
 				randomSleep := rand.Intn(58) + 3 // Generate random sleep duration between 3 seconds and 1 minute
 				records := time.Now().Format("2006-01-02 15:04:05.0000")
 				recordsSplit := strings.Split(records, ".")
 				recordsInt, _ := strconv.Atoi(recordsSplit[1])
-				logMessage("Processing config file " + file + ", trying to insert " + strconv.Itoa(recordsInt) + " records")
-				cmd := exec.Command("./pgdbgen", "-config", file, "-dbname", dbname, "-dbRecords2Process", strconv.Itoa(recordsInt))
+				logMessage("Processing config file " + yamlFile + ", trying to insert " + strconv.Itoa(recordsInt) + " records")
+				cmd := exec.Command("./pgdbgen", "-config", yamlFile, "-dbname", dbname, "-dbRecords2Process", strconv.Itoa(recordsInt))
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				err := cmd.Run()
