@@ -59,7 +59,7 @@ func main() {
 	} else {
 		dateFormat = "0000"
 	}
-
+	dateFormat = "2006-01-02 15:04:05." + dateFormat
 	var waitTime int
 	var errAtoi error
 	if len(os.Args[3]) > 0 {
@@ -87,7 +87,6 @@ func main() {
 			for _, yamlFile := range yamlFiles {
 				logMessage("Starting to add rows to " + dbname)
 				randomSleep := rand.Intn(waitTime) + 3 // Generate random sleep duration between 3 seconds and 1 minute
-				dateFormat = "2006-01-02 15:04:05." + dateFormat
 				// records := time.Now().Format("2006-01-02 15:04:05.0000")
 				records := time.Now().Format(dateFormat)
 				recordsSplit := strings.Split(records, ".")
