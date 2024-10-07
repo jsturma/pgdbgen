@@ -365,7 +365,7 @@ func worker(db *sql.DB, records <-chan int, wg *sync.WaitGroup, done chan<- bool
 		// Convert MD5 hash to string
 		paymentSerial := hex.EncodeToString(hash[:])
 		// Set the seed value for randomization
-		rand.Seed(time.Now().UnixNano())
+		// rand.Seed(time.Now().UnixNano())
 		// Accounts entry
 		userID := a.UUID
 		// Generate a random integer between min and max
